@@ -1,6 +1,52 @@
-# 热湾狂飙 · 静默频率
-**VICE COAST: Dead Air** 是一款在浏览器中运行的城市驾驶与剧情游戏。
+# Vice Coast | R12 additive extension
 
-从「进入剧情」跟随日落电台失踪母带的线索，或选「自由漫游」探索街区、挑战计时赛和跟车任务。桌面和触屏操作均可在游戏内的「操作指南」查看。
+This repository contains new authored R12 modules and a reproducible build adapter
+over the exact previously delivered standalone R11 HTML. It does not reconstruct,
+replace, or claim to possess the original R11 source. The build never edits that
+baseline. Standalone output and test evidence are local-only by default.
 
-本仓库提供独立的单文件试玩版。使用支持 WebGL 2 的现代浏览器打开；启动声音需先与页面互动。游戏进度保存在当前浏览器中，不会跨网站同步。第三方素材和库的授权说明已保留在游戏文件内。
+## Reproduce locally
+
+1. Install the authorized original R11 as `vendor/R11.html` using the byte pin in
+   [vendor/README.md](vendor/README.md). A sanitized source-only Git backup still
+   deliberately requires this independently retained original file.
+2. Use Node **v24.22.3**. Its built-in Acorn is **8.18.0**, checked at execution.
+   The scripts use `--expose-internals` to load the pinned parser without installation.
+   `npm run build` writes only `out/index.html` and `out/build.json`.
+3. `npm test` runs the framework's hash, provenance, and source policy checks.
+   No browser or WebGL is needed. The optional CPU-only exact-bundle fixture
+   uses preinstalled **@napi-rs/canvas 0.1.100** for the original 2D label painter:
+   `node --expose-internals tools/census.mjs` prints original scene evidence.
+
+`src/skyline.mjs` and `src/activity.mjs` are the self-contained authoring slots.
+Each exports `createArt({THREE, actors})` returning a detached native Group
+and optionally a presentation-only `update({elapsed,eye})`. Other local named
+helper exports are supported for tests but not exposed in runtime. No imports,
+DOM/storage/network, wall/vehicle actors, original scene traversal, or ambient
+wall-clock/random dependency. Write new geometry/materials only. The bridge gives
+its activity layer checked factory-and-pose access to detached clone actors; shared
+vendor geometry, textures and materials must not be modified. Skyline is static
+and has no actor allocation permission. Keep additions off play corridors.
+
+The adapter checks the full vendor and app hashes, game class, startup/render
+anchor shapes/cardinalities, and the native renderer-compatible bindings. It inserts
+only a private bridge declaration, one late-bootstrap mount and one pre-render
+tick. Removing these three tagged byte ranges restores the exact vendor script
+and complete HTML. The mount is after existing map/traffic/save loading and
+the static reflection capture, but before the simulation clock; added art is not
+in that original cube probe. Engine motion, routes, physics, storage and original
+actors remain unchanged by design. Tests and static evidence do not establish GPU,
+browser persistence, lighting or frame-rate parity.
+
+## Publication hygiene
+
+The source tree intentionally excludes private vendor/game HTML, generated output,
+assets contained in the vendor, tool logs, captured user data, real saved games,
+credentials and account/library identifiers. Do not add them to a source backup.
+The live file, old repository and external site are independent from this adapter.
+
+The original HTML embeds its own third-party notices (including Three.js,
+licensed typefaces and the reported CC0 MakeHuman adaptations). The build
+preserves that notice block byte for byte and does not extract or redistribute
+those assets in this source-only tree. This repository does not grant new
+redistribution rights to the vendor or its components.

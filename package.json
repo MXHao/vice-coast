@@ -1,0 +1,10 @@
+{
+  "name":"vice-coast-r12-extension",
+  "private":true,
+  "type":"module",
+  "engines":{"node":"24.22.3"},
+  "scripts":{
+    "build":"node --expose-internals build.mjs",
+    "test":"node --expose-internals --test --test-concurrency=1 tests/*.test.mjs"
+  }
+}

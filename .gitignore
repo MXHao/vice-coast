@@ -1,0 +1,7 @@
+/vendor/*
+!/vendor/README.md
+/out/
+/evidence/
+/local/
+/node_modules/
+/*.log
