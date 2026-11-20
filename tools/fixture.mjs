@@ -33,11 +33,13 @@ const forApp= (bytes)=> {
     assert.ok(n.end<=boundary);
     run=run.slice(0,n.start)+replacement+run.slice(n.end);
   }
-  const native='{' + Object.entries(ALIASES).map(([k,[v]])=>k+':'+v).join(',')+'}';
+  const testPerspective=unique(g.declarations.get('tA')??[],'fixture-only native PerspectiveCamera');
+  assert.match(slice(app,testPerspective.init),/this\.isPerspectiveCamera/);
+  const native='{' + Object.entries(ALIASES).map(([k,[v]])=>k+':'+v).join(',')+',PerspectiveCamera:tA}';
   run+=';globalThis.__gameFixture={Game:G0,native:'+native+'};})();';
   return run;
 };
-export function loadWorld(bytes, {compact=false, storage=new Map(), seed=14723}={}) {
+export function loadWorld(bytes, {compact=false, storage=new Map(), seed=14723, inlineImages=false}={}) {
   let perf=0, renderCalls=0, rafCalls=0, ioClock=0;
   const trace=[], errors=[], imageURLs=new Set(), notes=[], soundCalls=[], panels=[], hud=[];
   const sound = new Proxy({}, {get:(_,k)=>(...v)=>{if(k==='fx'||k==='setPaused')soundCalls.push([String(k),...v]);}});
@@ -50,11 +52,16 @@ export function loadWorld(bytes, {compact=false, storage=new Map(), seed=14723}=
       assert.ok(ns==='http://www.w3.org/1999/xhtml','Only HTML canvas/img fixtures');
       if(tag==='canvas')return makeCanvas(32,32);
       assert.equal(tag,'img');
+      // Offline scene-export mode supplies authorized inline image references to
+      // native TextureLoader without opening a URL or decoding inside the game.
+      const listeners=new Map();
       return {
-        addEventListener(){}, removeEventListener(){},
+        addEventListener(name, fn){if(inlineImages)listeners.set(name,fn);},
+        removeEventListener(name, fn){if(listeners.get(name)===fn)listeners.delete(name);},
         set src(uri){
           assert.ok(/^data:image\//.test(uri),'No network image in CPU fixture');
           imageURLs.add(uri);this.uri=uri;
+          if(inlineImages)listeners.get('load')?.call(this,{type:'load',target:this});
         },
         get src(){ return this.uri; }
       };

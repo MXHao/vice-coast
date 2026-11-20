@@ -32,7 +32,8 @@ export function build(vendor, sources){
   for(const patch of insertions){
     assert.ok(patch.at>=taken,'Anchor ordering');
     formed+=parts.app.slice(taken,patch.at);
-    undo.push({start:formed.length,end:formed.length+patch.text.length,id:patch.id,sha256:sha(patch.text)});
+    const start=formed.length, startByte=Buffer.byteLength(formed);
+    undo.push({start,end:start+patch.text.length,startByte,endByte:startByte+Buffer.byteLength(patch.text),id:patch.id,sha256:sha(patch.text)});
     formed+=patch.text;taken=patch.at;
   }
   formed+=parts.app.slice(taken);
@@ -45,7 +46,12 @@ export function build(vendor, sources){
     return s.slice(0,p.start)+s.slice(p.end);
   },candidateApp);
   assert.equal(sha(reverted),PIN.app);
-  const restore=Buffer.from(parts.before+reverted+parts.after);
+  const byteReversal=undo.toReversed().reduce((b,p)=>{
+    assert.equal(sha(b.subarray(p.startByte,p.endByte)),p.sha256);
+    return Buffer.concat([b.subarray(0,p.startByte),b.subarray(p.endByte)]);
+  },Buffer.from(candidateApp));
+  assert.ok(byteReversal.equals(Buffer.from(reverted)),'Exactly reversible by UTF-8 raw byte ranges');
+  const restore=Buffer.concat([Buffer.from(parts.before),byteReversal,Buffer.from(parts.after)]);
   assert.ok(restore.equals(vendor),'Exact original bytes must be recoverable from generated delta');
   return {candidate,metadata:{
     provenance:'Additive R12 overlay over exact shipped R11; not recovered source',
@@ -60,6 +66,9 @@ if(isMain){
   const readText=n=>readFile(file('src/'+n+'.mjs'),'utf8');
   const vendor=await readFile(file('vendor/R11.html'));
   const sources=Object.fromEntries(await Promise.all(['bridge','skyline','activity'].map(async n=>[n,await readText(n)])));
+  const artLock=JSON.parse(await readFile(file('art-lock.json'),'utf8'));
+  assert.deepEqual(Object.keys(artLock).sort(),['activity','skyline']);
+  for(const [name,hash] of Object.entries(artLock))assert.equal(sha(sources[name]),hash,'Locked author input: '+name);
   const {candidate,metadata}=build(vendor,sources);
   await mkdir(file('out'),{recursive:true});
   await writeFile(file('out/index.html'),candidate);

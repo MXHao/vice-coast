@@ -15,10 +15,13 @@ baseline. Standalone output and test evidence are local-only by default.
    `npm run build` writes only `out/index.html` and `out/build.json`.
 3. `npm test` runs the framework's hash, provenance, and source policy checks.
    No browser or WebGL is needed. The optional CPU-only exact-bundle fixture
-   uses preinstalled **@napi-rs/canvas 0.1.100** for the original 2D label painter:
+   uses **@napi-rs/canvas 0.1.100** for the original 2D label painter:
+   use the preinstalled copy or install the exact package from the npm registry
+   in a dedicated development checkout with `npm install --no-save --package-lock=false @napi-rs/canvas@0.1.100`.
    `node --expose-internals tools/census.mjs` prints original scene evidence.
 
-`src/skyline.mjs` and `src/activity.mjs` are the self-contained authoring slots.
+`src/skyline.mjs` and `src/activity.mjs` are the self-contained authoring modules. Their exact authored bytes are recorded
+in art-lock.json and checked by the release build.
 Each exports `createArt({THREE, actors})` returning a detached native Group
 and optionally a presentation-only `update({elapsed,eye})`. Other local named
 helper exports are supported for tests but not exposed in runtime. No imports,
@@ -50,3 +53,40 @@ licensed typefaces and the reported CC0 MakeHuman adaptations). The build
 preserves that notice block byte for byte and does not extract or redistribute
 those assets in this source-only tree. This repository does not grant new
 redistribution rights to the vendor or its components.
+
+## Longer offline behavior checks
+
+These are simulated keyboard/interaction sequences in the exact compiled game
+under a renderer stub with an in-memory save store, not real browsing, graphics,
+user files or benchmarking. Debug output and saved bytes are synthetic fixtures.
+
+For an isolated framework demonstration `node --expose-internals tools/smoke-build.mjs`
+generates an internal test artifact with one geometry fixture and one actively
+posed detached character. For a project build use `npm run build` and the exact
+`out/index.html` instead. Example comparing the two exact bundles:
+
+```sh
+mkdir -p evidence
+for layout in desktop compact; do
+  node --expose-internals tools/replay-run.mjs vendor/R11.html route "$layout" > "evidence/baseline-$layout.json"
+  node --expose-internals tools/replay-run.mjs local/framework-qa.html route "$layout" > "evidence/candidate-$layout.json"
+  node --expose-internals tools/audit.mjs "evidence/baseline-$layout.json" "evidence/candidate-$layout.json"
+done
+```
+
+`campaign` is the corresponding story-input scenario. The audit requires exact
+vendor identity, scope parity of the original game, and preservation of serialized
+saves; it allows the new presentation groups, not gameplay changes.
+
+## Current R12 art
+
+- The skyline groups add different massing to distant districts and stand-off
+  shading to selected repeated upper façades; the original city meshes and
+  street/collision footprint remain in place.
+- The activity group adds six non-interactive performers in market pockets and
+  recessed receiving positions, with time-driven tasks and lightweight
+  camera-distance gating. These are presentation-only actors, not citizens on
+  the traffic, encounter, inventory, or save systems.
+- Browser/runtime testing is intentionally excluded. Offline source/geometry
+  and save/route testing can verify the bridge boundary and scene composition,
+  not real GPU behavior or whole-game art parity.
