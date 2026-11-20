@@ -1,0 +1,152 @@
+{
+  "r14Standalone": "7ed80caf9069d86873deb9321cb18ccb18ef497a7f67ab4080d12b21683bb084",
+  "sourcePins": {
+    "checkpoints/wave1-forms.mjs": "09dfc12d27740e402b2b7304dcdf2ad42487ce1c723f76594e1a3d772242ec9e",
+    "checkpoints/wave2-forms.mjs": "af770b3c354192bd763c2174d3d9cd135882f75099c28e9caed3c7a7a246f440",
+    "checkpoints/wave2-display.mjs": "8c11910b0e80cde19eaf90eb4e5597f96912dbcc514d70e4dd7bd7f53ceafe8b",
+    "armory/renderkit.mjs": "5a948c5faca4456d96d4ebf6be25148cb58d444bc10a4ced126a96debd7d7efb",
+    "armory/wave2.mjs": "9235ebfb429440d3811cf12c046713856c1a8527e4a6431c320ee87519210e45"
+  },
+  "models": {
+    "p92": [
+      774,
+      8,
+      "8e9c40f98321372081d8369941a7efd1b538a2b58cd9f9fd6ebaf96af3fdb962"
+    ],
+    "m416": [
+      1762,
+      7,
+      "5f15ccaf4bea91288f0df432b3930eaa27ff7f6d94d7e8e13902188767c287bf"
+    ],
+    "p90": [
+      1186,
+      8,
+      "d4fb362640b5bbb56b723ff366ff488b4703a2b59ded666e423e3faf09daae95"
+    ],
+    "m870": [
+      1098,
+      7,
+      "0fd188f589bc20f494d74582102198f018590b92ab9209f75b5a3c7acfbce7cc"
+    ],
+    "m700": [
+      1511,
+      9,
+      "522a53b43d541a6ac0a59dc0ea39fb31ad4865bbe856c29c93aba9d99d7e7fb2"
+    ],
+    "mini14": [
+      1000,
+      8,
+      "de59571dfc7a75ae6b66894ad98ed696838c9723f2a60254ae36b06d02b6e4e8"
+    ],
+    "m249": [
+      1176,
+      8,
+      "7cfde071b2e62aa75f4de958882141643a47e6dfad1638539eb331c4b05f373e"
+    ],
+    "r1895": [
+      966,
+      9,
+      "37f4878c6758850b7779a7ef4db0c1d4e49bf06d4d574791f37d7bffcf06c3dd"
+    ],
+    "ak47": [
+      1030,
+      9,
+      "cdd4dbd126ebf1bb530ce84a7763ef306e4ba8efa9544f5ac17786caeccb1de0"
+    ],
+    "vector": [
+      1004,
+      7,
+      "39b3726c862a3f8a6cc6982950b0ad0521693124f267536ea31b236951c7428b"
+    ],
+    "s686": [
+      1026,
+      7,
+      "d03b23c0665a7961918091a1deec1b65a213bc984b257d0d1cfd0d010b37e028"
+    ],
+    "scar": [
+      1318,
+      9,
+      "21d737c8a1df8b965701bfc9d5eff2c0f144e1c029356212f8c213630e86ac9d"
+    ],
+    "mp5": [
+      1032,
+      8,
+      "79827d6f5c646db3542816db4e9a34bfd45c0416b3161e9c8c4e2813d56ea83b"
+    ],
+    "deagle": [
+      998,
+      9,
+      "c5f7962fce4f4286295a2849a4fdd016efd3801fc69eaec9e97b37a4fcf3bdc8"
+    ],
+    "awm": [
+      1593,
+      9,
+      "5e29e35ef71988daf7ad2791540717685488a358fc929fc409efbef8198d9a04"
+    ],
+    "m60": [
+      1210,
+      9,
+      "2ab534ed067eecf0294658e863ae5fa933f9b6331ca4b95b1efddcc94e87a3bc"
+    ],
+    "groza": [
+      1107,
+      11,
+      "13e2d2f9bb1ca7e34392445051781f28e7ac12b67dac5dbfdf9d4464f75b7fcf"
+    ],
+    "m16": [
+      1078,
+      11,
+      "7c0ace8513d8281d40db723ae398954713de4c9ee408b548de0e2ad64cbb3052"
+    ],
+    "ump": [
+      1206,
+      12,
+      "73a6c95b5b2e9820e65294d044f4aa6ed67793eb16062857a850f41b5c244b4d"
+    ],
+    "s12k": [
+      1102,
+      13,
+      "56dec71b994501afed694ce1575ded16ca94583919ed1acaf60aadfd6afaab2a"
+    ],
+    "barrett": [
+      1508,
+      11,
+      "b9c96d7864e6575878ea5a4ed9ac40a03611818bed8a690c571e84e79c908b70"
+    ],
+    "rpk": [
+      1304,
+      10,
+      "cd4fb0e1a02699fb88160222229dc0d4bd267c37a2469f6f0937c746dded53b3"
+    ],
+    "m4a1s": [
+      1313,
+      9,
+      "9d6dc2c200e786cefc6e1b745f7c1977cc83c189966e67a84c7eaa5f8453d7da"
+    ],
+    "ak47a": [
+      1318,
+      12,
+      "378299c14a27c36165549543a33d47c116645fa1231d337f80b9f0d33be568d3"
+    ],
+    "usps": [
+      911,
+      10,
+      "9d9ddffa800106828b49d3eda6cdd307c44fc104031b657fa486792a3f3b5176"
+    ],
+    "xm1014": [
+      1200,
+      9,
+      "84f7ef4cef1fc5c022bff83d50c98701e86dcdb10a623c0dce8129180aae212c"
+    ],
+    "kar98": [
+      1158,
+      9,
+      "d38ca7225ce7c554187bf545a94f3e2dd9ad33ea217235ba718c6ec74b1ecf76"
+    ],
+    "mg3silver": [
+      1344,
+      9,
+      "c48db22ebb387f2de3d9c0dceba5bfb0eaee751e7588ef219ba7414985f8770b"
+    ]
+  }
+}
