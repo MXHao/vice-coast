@@ -1,6 +1,6 @@
-# Vice Coast | R12 additive extension
+# Vice Coast | R12 and R13 additive editions
 
-This repository contains new authored R12 modules and a reproducible build adapter
+This repository contains authored R12 and R13 modules and a reproducible build adapter
 over the exact previously delivered standalone R11 HTML. It does not reconstruct,
 replace, or claim to possess the original R11 source. The build never edits that
 baseline. Standalone output and test evidence are local-only by default.
@@ -12,7 +12,11 @@ baseline. Standalone output and test evidence are local-only by default.
    deliberately requires this independently retained original file.
 2. Use Node **v24.22.3**. Its built-in Acorn is **8.18.0**, checked at execution.
    The scripts use `--expose-internals` to load the pinned parser without installation.
-   `npm run build` writes only `out/index.html` and `out/build.json`.
+   `npm run build` (or `npm run build -- r12`) reproduces the delivered R12 in
+   `out/index.html` with metadata at `out/build.json`. `npm run build -- r13`
+   builds the separately pinned R13 in `out/r13/index.html`, leaving R12 intact.
+   Each recipe validates its exact artifact byte count and hash. The R12 capsule
+   contains the historical bridge/activity and shares the pinned unchanged skyline.
 3. To run the full `npm test` suite, use the preinstalled **@napi-rs/canvas 0.1.100**
    or install that exact version from the npm registry in a development checkout:
    `npm install --no-save --package-lock=false @napi-rs/canvas@0.1.100`.
@@ -63,8 +67,7 @@ user files or benchmarking. Debug output and saved bytes are synthetic fixtures.
 
 For an isolated framework demonstration `node --expose-internals tools/smoke-build.mjs`
 generates an internal test artifact with one geometry fixture and one actively
-posed detached character. For a project build use `npm run build` and the exact
-`out/index.html` instead. Example comparing the two exact bundles:
+posed detached character. For exact comparisons, first build the desired pinned outputs. Example comparing original R11 with R12:
 
 ```sh
 mkdir -p evidence
@@ -83,7 +86,16 @@ earned in the replay and reopens each ending. The audit requires exact vendor
 identity, matched original gameplay and byte-identical serialized writes within
 the fixture; it allows the new presentation groups, not gameplay changes.
 
-## Current R12 art
+For R13 parity use the same command recipes with `out/index.html` as the
+baseline and `out/r13/index.html` as the candidate. Both full route profiles
+and the campaign stay comparable; the reports reject any difference in
+engine snapshots, save bytes, notices shown on screen, panels, sound calls,
+and fixture frame counters. To audit migration from the historical hosted v8,
+run `node --expose-internals tools/site-compat.mjs <authorized-v8-html> out/r13/index.html <CPU-R11-campaign-json>`.
+This projects the exact v8 serializer into an in-memory store and uses the
+native R13 restore path, never real player save files, a browser, or telemetry.
+
+## R12 art
 
 - The skyline groups add different massing to distant districts and stand-off
   shading to selected repeated upper façades; the original city meshes and
@@ -95,3 +107,18 @@ the fixture; it allows the new presentation groups, not gameplay changes.
 - Browser/runtime testing is intentionally excluded. Offline source/geometry
   and save/route testing can verify the bridge boundary and scene composition,
   not real GPU behavior or whole-game art parity.
+
+
+## R13 revisions
+
+- The Las Olas market adds one animated stock mover and a grounded wheeled
+  produce cart in a recessed market apron. Representative native foot-camera
+  stills make the task readable; in the passing chase camera it remains a
+  peripheral enrichment, not a crowd redesign. Existing quay activity stays.
+- Selected Dock Road lots get individual loading bays, roller doors, gutters,
+  awnings, split office glazing, and small geometric working signs. The update
+  changes nearby frontage, not the amount of playable road or usable interiors.
+- Both additions are presentation only. They receive neither prior scene
+  objects nor input, collision or storage authority. Fixed CPU views use the
+  original projected scene and camera with neutral substitute lighting; they
+  do not establish GPU behavior, runtime lighting, or whole-game quality parity.

@@ -222,6 +222,121 @@ function workRest(tools, THREE, near, y, z, paint) {
  tools.box(g,'shore identifying edge stripe',paint,.60,.025,.021,0,.71,-.160,false);
  return g;
 }
+// A full-height object and one working silhouette mark the apron, not a
+// second queue. Las Olas street is south of z=10; retain its continuous walk
+// strip at z=10.03-12.03. The cart runs behind that strip in an existing
+// off-route market pocket and never enters either original building.
+export const threshold = Object.freeze({
+  period:24.7, xWest:41.75, xEast:44.76, ground:.160, z:12.52,
+  wheel:.159, width:.665, handle:.619, handleY:1.028, handleHalf:.252, back:.891, stockX:.174, stockY:1.024, stockZ:.465
+});
+export function sampleThreshold(elapsed) {
+ const c=threshold,t0=Number.isFinite(elapsed)?elapsed:0;
+ const t=t0-Math.floor(t0/c.period)*c.period;
+ const departure=5.24,pullEnd=9.16,arrival=13.13,pushEnd=17.12;
+ const backwards=t>departure&&t<pullEnd,forward=t>arrival&&t<pushEnd;
+ const r=backwards?clamp((t-departure)/(pullEnd-departure)):forward?clamp((t-arrival)/(pushEnd-arrival)):0;
+ const trayMix=backwards?smooth(r):forward?1-smooth(r):t>=pullEnd&&t<=arrival?1:0;
+ const x=lerp(c.xWest,c.xEast,trayMix), d=c.xEast-c.xWest;
+ const pace=backwards?d*6*r*(1-r)/(pullEnd-departure):forward?d*6*r*(1-r)/(pushEnd-arrival):0;
+ const grip=Math.max(reach(t,4.48,5.07,9.29,9.82),reach(t,12.47,12.95,17.32,18.01));
+ const stock=Math.max(reach(t,10.05,10.35,11.48,12.14),reach(t,18.21,18.59,21.35,22.51));
+ const idleSide=reach(t,.56,1.56,3.52,4.47)+reach(t,22.34,22.88,23.13,24.21);
+ const y=c.ground, z=c.z;
+ // Native actor forward is local -Z. A short backward pull is an explicit
+ // backpedal, not a forward loop played while sliding backwards.
+ const phase=TAU*5*(t<=pullEnd?trayMix:t<arrival?1:2-trayMix)+3.43;
+ return {t,x,y,z,bodyX:x+c.back,bodyZ:z,yaw:PI/2,wheel:(x-c.xWest)/c.wheel,
+  phase,pace,grip,stock,idleSide,
+  gait:pace/1.65,backpedal:backwards,
+  lookYaw:.42*idleSide-.21*stock,lookPitch:.095+.24*stock,crouch:.075*grip+.22*stock};
+}
+function thresholdCart(THREE,tools){
+ const cfg=threshold,o=new THREE.Group(),wheels=[];
+ o.name='Las Olas produce cart';
+ const mat=(color,roughness,metalness=0)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
+ const frame=mat(0x913f33,.71,.32),edge=mat(0xc67a54,.84),rubber=mat(0x343636,.89);
+ const iron=mat(0x555752,.63,.46),paper=mat(0xdecba5,.89),canvas=mat(0xa8a68a,.85);
+ const pipe = new THREE.CylinderGeometry(.015,.015,1,8);
+ const bbox=(name,color,w,h,d,x,y,z)=>tools.box(o,name,color,w,h,d,x,y,z);
+ const {Vector3}=THREE,up=new Vector3(0,1,0);
+ function tubular(name,color,a,b) {
+   const s=new Vector3(...a),t=new Vector3(...b),d=t.clone().sub(s),body=new THREE.Mesh(pipe,color);
+   body.name=name;body.position.copy(s).lerp(t,.5);body.scale.y=d.length();body.quaternion.setFromUnitVectors(up,d.normalize());
+   body.castShadow=true;body.receiveShadow=true;o.add(body);
+ }
+ const wheelR=cfg.wheel,drum=new THREE.CylinderGeometry(wheelR,wheelR,.069,16);
+ const rim=new THREE.CylinderGeometry(.104,.104,.074,12),nut=new THREE.CylinderGeometry(.039,.039,.080,10);
+ const cartEdge=cfg.width*.5;
+ for(const z of [-.425,.389]){
+   for(const h of [-1,1]){
+    const x=h*(cartEdge+.001),rot=new THREE.Group();
+    rot.name='Grounded produce cart wheel';rot.position.set(x,wheelR,z);o.add(rot);wheels.push(rot);
+    for(const [name,g,m] of [['pressed rubber',drum,rubber],['painted pressed steel hub',rim,edge],['axle head',nut,iron]]){
+     const v=new THREE.Mesh(g,m);v.name=name;v.rotation.z=PI/2;v.castShadow=true;v.receiveShadow=true;rot.add(v);
+    }
+    for(let j=0;j<4;j++){
+     const a=j*TAU/4+.27;
+     const p=tools.box(rot,'Offset hub relief',iron,.009,.092,.013,h*.040,.061*Math.cos(a),.061*Math.sin(a),false);
+     p.rotation.x=a;
+    }
+    bbox('Pressed steel wheel fork',frame,.053,.243,.066,x,.307,z);
+   }
+   bbox('Underframe axle',iron,.665,.043,.043,0,wheelR,z);
+ }
+ bbox('Braced underframe and steel pan',frame,.636,.074,1.11,0,.398,-.014);
+ bbox('Worn plank cart deck','woodEdge',.648,.043,1.171,0,.458,-.014);
+ for(const s of [-1,1]){
+   bbox('Long raised cart kick board',frame,.028,.121,1.158,s*.318,.513,-.014);
+   bbox('Paint chips at long rail',edge,.004,.013,.32,s*.333,.544,-s*.235);
+   tubular('Bent handle upright',iron,[s*.25,.42,.472],[s*cfg.handleHalf,cfg.handleY,cfg.handle]);
+   tubular('Rubber handle sleeve',rubber,[s*.271,cfg.handleY,cfg.handle],[s*.208,cfg.handleY,cfg.handle]);
+ }
+ tubular('Handle continuous axle',iron,[-.262,cfg.handleY,cfg.handle],[.262,cfg.handleY,cfg.handle]);
+ bbox('Old paper market docket',paper,.005,.079,.234,-.334,.52,.213);
+ bbox('Reused side trim',edge,.005,.018,.120,-.337,.531,.205);
+ // Low mixed display, not a uniform wall of cargo. Road-side face keeps
+ // exposed timber, citrus, and recognizable wheels at moving-camera scale.
+ const p=c=>{
+   const g=new THREE.Group();
+   g.name=c.name;g.position.set(c.x,c.y,c.z);g.rotation.y=c.spin;
+   tools.box(g,'Ventilated tray base','woodDark',c.w,.035,c.d,0,.018,0);
+   for(const sign of [-1,1]){
+    for(let j=0;j<2;j++){
+     tools.box(g,'Market tray side slat',j?'woodEdge':'wood',c.w,.053,.019,0,.052+j*.061,sign*(c.d*.5-.011));
+     tools.box(g,'Market tray end slat',j?'woodEdge':'wood',.019,.054,c.d-.04,sign*(c.w*.5-.01),.052+j*.061,0);
+    }
+    for(const z of [-1,1])tools.box(g,'Stapled cleat','woodDark',.039,.134,.035,sign*(c.w*.5-.02),.067,z*(c.d*.5-.018));
+   }
+   o.add(g);return g;
+ };
+ p({name:'Lower crate of wrapped market stock',w:.569,d:.456,y:.482,x:0,z:-.277,spin:0});
+ const citrus=p({name:'Shallow mandarin crate',w:.474,d:.374,y:.618,x:-.036,z:-.29,spin:-.10});
+ bbox('Rear stock packing box',paper,.521,.362,.47,.012,.663,.275);
+ for(const x of [-.237,.261])bbox('Stock carton folding seam','wood',.036,.363,.477,x,.667,.275);
+ bbox('Stock box bands',edge,.524,.020,.474,.012,.533,.275);
+ const greens=p({name:'Raised tray for the next stock check',w:.577,d:.479,y:.845,x:.008,z:.261,spin:.03});
+ bbox('Folded end of the weighed herb parcel',canvas,.109,.044,.120,.163,.982,.437);
+ const produceGeo=new THREE.SphereGeometry(1,10,6),matrix=new THREE.Matrix4(),quaternion=new THREE.Quaternion(),pos=new Vector3(),scale=new Vector3();
+ function produce(g,name,count,col,i0,ix,iz,y,sx,sz,stretch=1){
+   const row=new THREE.InstancedMesh(produceGeo,mat(col,.83),count);row.name=name;row.castShadow=true;row.receiveShadow=true;
+   for(let i=0;i<count;i++){
+     const j=i+i0,u=j%ix,v=Math.floor(j/ix),m=.5+.5*Math.sin(j*8.13);
+     pos.set((u-(ix-1)/2)*sx+.009*Math.cos(j*3.8),y+.015*m,v*sz-(iz-1)*sz*.5+.014*Math.sin(j*7.23));
+     const r=.037+.008*m;scale.set(r,r*.91,r*stretch);quaternion.setFromAxisAngle(up,.58*j);
+     matrix.compose(pos,quaternion,scale);row.setMatrixAt(i,matrix);
+   }
+   g.add(row);
+ }
+ produce(citrus,'Mandarin skins',14,0xd97a36,0,6,4,.116,.066,.060);
+ produce(citrus,'Paler ripe mandarins',10,0xe6a551,14,6,4,.108,.066,.060);
+ produce(greens,'Stem green leaves',12,0x73905c,0,5,4,.104,.090,.075,1.45);
+ produce(greens,'Matted deep greens',8,0x4b6844,12,5,4,.102,.090,.075,1.31);
+ bbox('Folded linen for handling fruit',canvas,.184,.035,.235,.195,.801,-.38).rotation.y=-.23;
+ bbox('Draped linen fold over tray end',canvas,.024,.109,.218,.28,.755,-.381).rotation.y=-.14;
+ return {cart:o,wheels};
+}
+
 export function createArt({THREE,actors}) {
  const root=new THREE.Group();root.name='R12 street life | actual market & receiving work';
  const mats=colors(THREE),tools=propTools(THREE,mats),solve=rigTools(THREE),v=new THREE.Vector3(),world=new THREE.Vector3(),up=new THREE.Vector3(0,1,0);
@@ -246,6 +361,22 @@ export function createArt({THREE,actors}) {
   mem.set(a.id,{man,rig,item});
  }
  const crate=tools.cargo(.52,.285,.317);
+ const apronActor=actors.create(7),apronRig=namedRig(apronActor),stock=thresholdCart(THREE,tools);
+ apronActor.name='Ambient vignette: market stock mover';
+ places.market.group.add(apronActor,stock.cart);
+ const tan=apronMaterial(0xd2b28c),marsala=apronMaterial(0xa86e52),bib=new THREE.Group();
+ bib.name='Market stock mover apron';
+ tools.box(bib,'Creased apron',tan,.334,.375,.018,0,.205,-.164,false);
+ tools.box(bib,'Apron broad sash',marsala,.337,.034,.020,0,.272,-.177,false);
+ for(const s of [-1,1]){
+  tools.box(bib,'Apron shoulder strap',marsala,.028,.178,.017,s*.089,.407,-.152,false);
+  tools.box(bib,'Crossed market apron straps',tan,.027,.226,.013,s*.061,.352,.143,false).rotation.z=-s*.42;
+  tools.box(bib,'Side of apron waist wrap',tan,.013,.034,.266,s*.166,.287,-.014,false);
+ }
+ tools.box(bib,'Tightly wrapped back waist tie',tan,.314,.031,.019,0,.285,.124,false);
+ tools.box(bib,'Apron loose tie',tan,.034,.118,.020,-.019,.233,.137,false).rotation.z=.29;
+ apronRig.spine.add(bib);
+
  places.port.group.add(crate,workRest(tools,THREE,-68.80,.87,194.57,'green'),workRest(tools,THREE,-68.80,.87,198.12,'woodEdge'));
  function update({elapsed,eye}) {
    if(!Number.isFinite(elapsed))return;
@@ -253,6 +384,25 @@ export function createArt({THREE,actors}) {
    const operator=places.port.group.visible?sampleActivity(elapsed,crew[4]):null;
    const cargo=operator?sampleCargo(operator):null;
    if(cargo){crate.position.set(cargo.x,cargo.y,cargo.z);crate.rotation.y=cargo.yaw;}
+   if(places.market.group.visible){
+     const s=sampleThreshold(elapsed),c=threshold;
+     stock.cart.position.set(s.x,s.y,s.z);stock.cart.rotation.y=s.yaw;
+     for(const w of stock.wheels)w.rotation.x=s.wheel;
+     apronActor.position.set(s.bodyX,s.y,s.bodyZ);apronActor.rotation.y=s.yaw;
+     actors.pose(apronActor,s.phase,s.gait,{time:elapsed+2.173,pace:s.pace,lookYaw:s.lookYaw,
+      lookPitch:s.lookPitch,crouch:s.crouch,backpedal:s.backpedal});
+     apronActor.updateMatrixWorld(true);
+     for(const sign of [-1,1]){
+       // These wrists follow measured handles, not an unrelated arm loop.
+       // On the pause the left hand holds the rail while the right adjusts
+       // the nearest tray. Reach stays within the contracted native bones.
+       const adjust=sign>0?s.stock:0;
+       world.set(sign*lerp(c.handleHalf,c.stockX,adjust),lerp(c.handleY,c.stockY,adjust)+.010*adjust*wobble(elapsed,4.8,.62),lerp(c.handle,c.stockZ,adjust))
+        .applyAxisAngle(up,s.yaw).add(stock.cart.position);
+       apronRig.spine.worldToLocal(world);
+       solve(apronRig[sign<0?'left':'right'],world,sign,Math.max(s.grip,s.stock*(sign<0?.74:.98)));
+     }
+   }
    for(const a of crew){
     if(!places[a.site].group.visible)continue;
     let s=sampleActivity(elapsed,a);

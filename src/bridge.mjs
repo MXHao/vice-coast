@@ -1,12 +1,14 @@
 // Additive render layer only. Nothing reads a game object or publishes a global.
 export function createBridge(factories) {
   const scenes = new WeakMap();
-  const names = ['skyline', 'activity'];
+  const names = ['skyline', 'activity', 'warehouse'];
+  const label = name => name === 'warehouse' ? 'R13' : 'R12';
   const poseFields = ['time','pace','lookYaw','lookPitch','crouch','turn','backpedal','strafe'];
   function finite(...v) { return v.every(Number.isFinite); }
   function mount(scene, native, makeActor, poseActor) {
     if (scenes.has(scene)) return;
     const entries = [];
+    if (factories.length > names.length) throw Error('Unexpected presentation factory');
     // Register before constructing anything so even a reentrant scene event can't mount twice.
     scenes.set(scene, entries);
     const THREE = Object.freeze(native);
@@ -49,14 +51,14 @@ export function createBridge(factories) {
           throw Error('Expected {root: detached Group, update?: function}');
         }
         const layer = new THREE.Group();
-        layer.name = 'VICE COAST R12 | ' + name;
+        layer.name = 'VICE COAST ' + label(name) + ' | ' + name;
         layer.add(spec.root);
         scene.add(layer);
         entries.push({layer, name, update: spec.update || null});
       } catch (error) {
         // Production safety: a malformed owned art layer must not stop original game boot.
         // Offline qualification rejects all such failures, so published builds cannot rely on this.
-        console.error('R12 mount failed: ' + name, error);
+        console.error(label(name) + ' mount failed: ' + name, error);
       }
     }
   }
@@ -72,7 +74,7 @@ export function createBridge(factories) {
       } catch (error) {
         entry.update = null;
         entry.layer.visible = false;
-        console.error('R12 update failed: ' + entry.name, error);
+        console.error(label(entry.name) + ' update failed: ' + entry.name, error);
       }
     }
   }

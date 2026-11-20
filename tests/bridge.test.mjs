@@ -52,3 +52,18 @@ test('bad owned art is isolated; a render update exception hides only the faulty
  assert.equal(errors.length,2);
  assert.deepEqual(errors.map(x=>x[0]),['R12 mount failed: activity','R12 update failed: skyline']);
 });
+
+test('third detached warehouse is static art without actor capability and cannot duplicate on remount',()=>{
+ const scene=new Group();
+ const b=createBridge([({THREE})=>({root:new THREE.Group()}),({THREE})=>({root:new THREE.Group()}),
+  ({THREE,actors})=>{
+   assert.throws(()=>actors.create(2),/no actor permission/);
+   assert.throws(()=>actors.pose(new Group(),1,.4),/Not an actor/);
+   return {root:new THREE.Group()};
+  }
+ ]);
+ const unused=()=>assert.fail('Warehouse cannot access owned actor factory');
+ b.mount(scene,{Group},unused,unused);b.mount(scene,{Group},unused,unused);
+ assert.deepEqual(scene.children.map(o=>o.name),['VICE COAST R12 | skyline','VICE COAST R12 | activity','VICE COAST R13 | warehouse']);
+ b.update(scene,1,0,0,0);
+});

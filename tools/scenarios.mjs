@@ -4,7 +4,7 @@ export const SAVE='vice-coast-drive-v1';
 const clone=x=>JSON.parse(JSON.stringify(x));
 const hypot=(a,x,z)=>Math.hypot(a.x-x,a.z-z);
 const vehicle=c=>[c.type,c.color,c.mesh.position.toArray(),c.yaw,c.index,c.roadSpeed??null,c.wait,c.mesh.visible];
-function pose(g){
+export function pose(g){
  return {pos:g.pos.toArray(),yaw:g.yaw,bodyYaw:g.player.rotation.y,camera:g.camera.position.toArray(),
   cameraMode:g.camMode,car:g.cars.indexOf(g.car),money:g.money,story:g.story.snapshot(),
   heat:g.heat,cars:g.cars.map(vehicle),walkers:g.walkers.map(w=>[w.mesh.position.toArray(),w.dir,w.pace,w.mesh.visible])};
@@ -15,13 +15,10 @@ function setKeys(g,keys){
  else if(keys[0]==='!KeyC')g.view();
  else for(const k of keys)g.keys.add(k);
 }
-function artObject(o){
- for(let p=o;p;p=p.parent)if(p.name.startsWith('VICE COAST R12 | '))return true;
- return false;
-}
+const artLayer=o=>/^VICE COAST R1[23] \| /.test(o.name);
 export function geometry(g){
  const result={groups:[],meshes:0,triangles:0};
- for(const group of g.scene.children.filter(x=>x.name.startsWith('VICE COAST R12 | '))){
+ for(const group of g.scene.children.filter(artLayer)){
   const d={name:group.name,rootChildren:group.children.length,meshes:0,triangles:0};
   group.traverse(o=>{
    if(!o.isMesh)return;
