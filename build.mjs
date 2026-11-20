@@ -4,6 +4,9 @@ import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {PIN,BRIDGE,ALIASES,CONSTS,sha,splitHtml,parse,inspectProgram,moduleBody,query,ident} from './tools/ast.mjs';
 import {R12_ARTIFACT,R13_ARTIFACT} from './tools/versions.mjs';
+import {roadSolidsSplices,SOLIDS,ROAD_COLLISION_ARTIFACT} from './tools/road-solids-splices.mjs';
+import {CORE_MODULES,R14_CORE_ARTIFACT} from './tools/r14-core-lock.mjs';
+import {r14CoreSplices} from './tools/r14-core-splices.mjs';
 
 const here=dirname(fileURLToPath(import.meta.url));
 const file=n=>resolve(here,n);
@@ -30,6 +33,18 @@ export function build(vendor, sources){
     {id:'mount-before-clock',at:original.mount.node.start,text:BRIDGE+'.mount(this.scene,'+native+',Ms,hi),'},
     {id:'presentation-before-render',at:original.render.node.start,text:BRIDGE+'.update(this.scene,this.elapsed,this.camera.position.x,this.camera.position.y,this.camera.position.z),'}
   ];
+  const collision=typeof sources.roadSolids==='string';
+  const core=Object.keys(CORE_MODULES).some(n=>sources[n]!==undefined);
+  if(collision){
+    assert.ok(artNames.includes('warehouse'),'Collision candidate is based on the full R13 source');
+    insertions.push(...roadSolidsSplices(parts.app,original,sources.roadSolids));
+  }
+  if(core)insertions.push(...r14CoreSplices(parts.app,original,sources));
+  // Graphics/touch authored their standalone wrappers in R13 coordinates
+  // before the inherited declaration. Preserve those byte-exact solo orders
+  // when using their original R11 coordinates in the core composition.
+  const declarationRank=id=>core?(id==='quality-private'?-2:id==='touch-private'?-1:0):0;
+  if(collision||core)insertions.sort((a,b)=>a.at-b.at||declarationRank(a.id)-declarationRank(b.id));
   let formed='',taken=0;const undo=[];
   for(const patch of insertions){
     assert.ok(patch.at>=taken,'Anchor ordering');
@@ -43,6 +58,7 @@ export function build(vendor, sources){
   const candidateApp=splitHtml(candidate).app;
   const after=parse(candidateApp);
   assert.equal(query(after,k=>ident(k,BRIDGE)).length,3,'Only declaration + two calls allowed');
+  assert.equal(query(after,k=>ident(k,SOLIDS)).length,collision?3:0,'Only the two guarded collision call sites');
   const reverted=undo.toReversed().reduce((s,p)=>{
     assert.equal(sha(s.slice(p.start,p.end)),p.sha256);
     return s.slice(0,p.start)+s.slice(p.end);
@@ -56,14 +72,14 @@ export function build(vendor, sources){
   const restore=Buffer.concat([Buffer.from(parts.before),byteReversal,Buffer.from(parts.after)]);
   assert.ok(restore.equals(vendor),'Exact original bytes must be recoverable from generated delta');
   return {candidate,metadata:{
-    provenance:'Additive '+(artNames.length===3?'R13':'R12')+' overlay over exact shipped R11; not recovered source',
+    provenance:'Additive '+(core?'R14 core candidate':collision?'R14 collision candidate':artNames.length===3?'R13':'R12')+' overlay over exact shipped R11; not recovered source',
     vendor:PIN,candidate:{sha256:sha(candidate),bytes:candidate.length,app:sha(candidateApp)},
-    source:Object.fromEntries(['bridge',...artNames].map(n=>[n,sha(sources[n])])),
+    source:Object.fromEntries(['bridge',...artNames,...(collision?['roadSolids']:[]),...(core?Object.keys(CORE_MODULES):[])].map(n=>[n,sha(sources[n])])),
     reversible:true,insertions:undo
   }};
 }
 export async function sourcesFor(version) {
-  assert.ok(['r12','r13'].includes(version),'Expected exact build revision r12 or r13');
+  assert.ok(['r12','r13','r14-collision','r14-core'].includes(version),'Unknown local build revision');
   const r12=version==='r12',prefix=r12?'src/r12/':'src/';
   const paths={bridge:prefix+'bridge.mjs',skyline:'src/skyline.mjs',activity:prefix+'activity.mjs'};
   if(!r12)paths.warehouse='src/warehouse.mjs';
@@ -72,16 +88,21 @@ export async function sourcesFor(version) {
   const expected=Object.keys(paths).sort();
   assert.deepEqual(Object.keys(lock).sort(),r12?expected:expected.filter(n=>n!=='bridge'));
   for(const [name,hash] of Object.entries(lock))assert.equal(sha(sources[name]),hash,'Locked author input: '+name);
+  if(version.startsWith('r14-'))sources.roadSolids=await readFile(file('src/road-solids.mjs'),'utf8');
+  if(version==='r14-core')for(const [name,rule] of Object.entries(CORE_MODULES)){
+    sources[name]=await readFile(file('src/'+rule.file),'utf8');
+  }
   return sources;
 }
 export const isMain=process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url);
 if(isMain){
-  assert.ok(process.argv.length<=3,'Use npm run build -- r12 or npm run build -- r13');
+  assert.ok(process.argv.length<=3,'Use npm run build -- r12, r13, r14-collision or r14-core');
   const revision=process.argv[2]??'r12';
   const vendor=await readFile(file('vendor/R11.html'));
   const {candidate,metadata}=build(vendor,await sourcesFor(revision));
-  assert.deepEqual(metadata.candidate,revision==='r12'?R12_ARTIFACT:R13_ARTIFACT,revision+' capsule must rebuild byte for byte');
-  const dir=revision==='r12'?'out':'out/r13';
+  const expected={r12:R12_ARTIFACT,r13:R13_ARTIFACT,'r14-collision':ROAD_COLLISION_ARTIFACT,'r14-core':R14_CORE_ARTIFACT}[revision];
+  assert.deepEqual(metadata.candidate,expected,revision+' capsule must rebuild byte for byte');
+  const dir=revision==='r12'?'out':'out/'+revision;
   await mkdir(file(dir),{recursive:true});
   await writeFile(file(dir+'/index.html'),candidate);
   await writeFile(file(dir+'/build.json'),JSON.stringify(metadata,null,2)+'\n');

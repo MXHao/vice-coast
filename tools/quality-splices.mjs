@@ -1,0 +1,43 @@
+// Return insertion-only edits in ORIGINAL app coordinates for the R14 composite.
+import assert from 'node:assert/strict';
+import {moduleBody,self,slice,query,unique,ident} from './ast.mjs';
+export function qualitySplices(app, inspected, graphicsSource, walkerSource) {
+  const {tree,inner,ctor,method}=inspected;
+  const G='__vcR14Graphics', W='__vcR14WalkerIndex', S='__vcR14WalkerBatch';
+  const decl=(name)=>unique(query(inner,n=>n.type==='FunctionDeclaration'&&ident(n.id,name)),'function '+name).node;
+  const hit=(scope,pred,name)=>unique(query(scope,pred),name);
+  const text=(scope,type,expected)=>hit(scope,n=>n.type===type&&slice(app,n)===expected,expected).node;
+  for(const k of [G,W,S]) assert.equal(query(tree,n=>ident(n,k)).length,0,'Unallocated private name '+k);
+  const patches=[],put=(id,at,content)=>patches.push({id:'quality-'+id,at,text:content});
+  const wrap=(id,n,before,after)=>{put(id+'-start',n.start,before);put(id+'-end',n.end,after);};
+  const factory=(src,name)=>'(()=>{\n'+moduleBody(src,name,true)+'\nreturn '+name+'();\n})()';
+  put('private',inner.start+1,'\nconst '+G+'='+factory(graphicsSource,'createGraphicsQuality')+','+W+'='+factory(walkerSource,'createWalkerIndex')+';\n');
+  const dpr=text(ctor,'CallExpression','this.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2.5))');
+  wrap('renderer',dpr.arguments[0],G+'.bindRenderer(this.renderer,',')');
+  const light=decl('g3');
+  const cap=text(light,'VariableDeclaration','let i=o7(t);');
+  text(light,'CallExpression','n.shadow.mapSize.set(i,i)');
+  text(light,'BinaryExpression','e.halfX*2/i'); text(light,'BinaryExpression','e.halfY*2/i');
+  put('sun',cap.end,G+'.bindSun(t,n,i,v=>{i=v});');
+  const panel=decl('XA');
+  const markup=hit(panel,n=>n.type==='AssignmentExpression'&&slice(app,n)==='e.innerHTML=n','panel native markup');
+  assert.equal(markup.parent.type,'SequenceExpression');
+  assert.equal(markup.parent.expressions[0],markup.node);
+  put('panel',markup.node.start,'n='+G+'.menuMarkup(A,n,Wt),');
+  const findOnclick=(id)=>hit(inner,n=>n.type==='AssignmentExpression'&&n.left.type==='MemberExpression'&&slice(app,n.left)==='Wt("'+id+'").onclick','native '+id+' binding');
+  const tap=findOnclick('panel');
+  assert.equal(tap.node.right.type,'ArrowFunctionExpression');
+  const action=text(tap.node.right,'VariableDeclaration','let e=t.dataset.action;');
+  put('actions',action.end,'if('+G+'.handle(e,Wt("panel"),XA))return;');
+  const guide=findOnclick('guide'); assert.equal(guide.parent.type,'ExpressionStatement');
+  put('title',guide.parent.start,G+'.mountTitle(Wt,XA);');
+  const step=method('step'), walker=hit(step,n=>n.type==='ForOfStatement'&&self(n.right,'walkers'),'synchronous walker loop');
+  assert.equal(walker.parent.type,'BlockStatement');
+  const blockedSrc='blocked(t,e,n){return t<-207+n||t>(this.car?136:141)-n||e<-288+n||e>288-n?!0:this.blocks.some(i=>t+n>i.minX&&t-n<i.maxX&&e+n>i.minZ&&e-n<i.maxZ)}';
+  assert.equal(slice(app,method('blocked')),blockedSrc,'Indexed boundary and overlap predicates pinned to exact original');
+  const calls=query(walker.node.body,n=>n.type==='CallExpression'&&self(n.callee,'blocked')).map(x=>x.node);
+  assert.deepEqual(calls.map(n=>slice(app,n)),['this.blocked(i.x+f,i.z,.22)','this.blocked(i.x,v,.19)']);
+  put('walker-prepare',walker.node.start,'const '+S+'='+W+'.batch(this);');
+  for(const [idx,n] of calls.entries())wrap('walker-'+idx,n.callee.object,'('+S+'||',')');
+  return patches.sort((a,b)=>a.at-b.at);
+}
