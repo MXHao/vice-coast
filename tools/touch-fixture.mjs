@@ -21,7 +21,7 @@ export function touchProjection(bytes){
   'var Ri=Xw(Wt("moveStick"),A=>!!(ne&&!ne.paused&&!IA&&A==="drive"==!!ne.car));',
   'class Game{'+slice(app,g.method('clearInput'))+slice(app,g.method('setPaused'))+'}',
   ...lines('__vcR14Graphics.mountTitle('),...lines('__vcR14Touch.mount('),...lines('Wt("panel").onclick='),...lines('Wt("close").onclick='),...lines('Ri.bindTap('),
-  ...keys,...resize,
+  def('kw'),...keys,...resize,
   'globalThis.probe={current:()=>IA,keys:Ri.keys,axes:Ri.axes,game:new Game(),bind(g){ne=g},sync(A){'+mode +'},camera(){'+cam+desktopMount+'},hold(){return '+desktopHold+'},open:p=>XA(p),quality:'+(quality?'__vcR14Graphics':'null')+',close:wi,reset:()=>ne.clearInput()};'
  ].join('\n');
  return function run({coarse=true,storage=new Map(),w=844,h=390,safe={l:47,t:0,r:47,b:21},denied=false}={}){
@@ -38,6 +38,7 @@ export function touchProjection(bytes){
    setAttribute(k,v){v=String(v);this.attrs[k]=v;if(k.startsWith('data-'))this.dataset[k.slice(5)]=v;}
    toggleAttribute(k,v){if(v??!Object.hasOwn(this.attrs,k))this.setAttribute(k,'');else delete this.attrs[k];}
    getAttribute(k){return this.attrs[k]??null;}
+   removeAttribute(k){delete this.attrs[k];if(k.startsWith('data-'))delete this.dataset[k.slice(5)];}
    focus(){doc.activeElement=this;}
    setPointerCapture(id){this.grabs.add(id);}hasPointerCapture(id){return this.grabs.has(id);}releasePointerCapture(id){this.grabs.delete(id);}
    appendChild(el){return this.insertBefore(el,null);}
@@ -86,7 +87,7 @@ export function touchProjection(bytes){
   }
   doc.body=new E();doc.head=new E();doc.getElementById=id=>ids.get(id);doc.createElement=t=>new E(t);
   function add(id,tag='button',parent=doc.body){let e=new E(tag);e.id=id;parent.appendChild(e);return e;}
-  for(const id of ['overlay','panel','panelTitle','close','touchDeck','moveStick','miniButton','pause','interact','taskBox','guide','touchCar','touchGun','touchReload','touchCrouch','touchFire','touchBrake','gasKey','brakeKey','actions','canvas'])add(id,['panel','panelTitle','overlay','touchDeck','moveStick','actions'].includes(id)?'div':'button');
+  for(const id of ['overlay','panel','panelTitle','close','touchDeck','moveStick','miniButton','pause','interact','taskBox','guide','touchCar','touchGun','touchReload','touchCrouch','touchFire','touchBrake','gasKey','brakeKey','actions','canvas'])add(id,id==='canvas'?'canvas':['panel','panelTitle','overlay','touchDeck','moveStick','actions'].includes(id)?'div':'button');
   add('roam','button',ids.get('actions'));const cap=new E();cap.className='stick-cap';ids.get('moveStick').appendChild(cap);
   for(const [id,k] of [['left','KeyA'],['right','KeyD']])add(id,'button',ids.get('touchDeck')).dataset.key=k;
   for(const [id,k] of [['touchBrake','Space'],['gasKey','KeyW'],['brakeKey','KeyS']])ids.get(id).dataset.key=k;
@@ -123,7 +124,7 @@ export function touchProjection(bytes){
    const r=el.getBoundingClientRect(),p={pointerId:id,clientX:r.left+r.width/2,clientY:r.top+r.height/2};
    el.emit('pointerdown',p);el.emit('pointerup',p);el.emit('click',{...p,detail:1});
   }
-  const panel=ids.get('panel'),pick=(k,v)=>{const b=panel.querySelectorAll('button').find(b=>b.dataset[k]===v);assert.ok(b,'visible '+k+' '+v);b.emit('click');return b;};
+  const panel=ids.get('panel'),pick=(k,v,event={})=>{const b=panel.querySelectorAll('button').find(b=>b.dataset[k]===v);assert.ok(b,'visible '+k+' '+v);b.emit('click',event);return b;};
   return {ids,doc,docEvent,win,probe,notes,ops,world,storage,get:id=>ids.get(id),panel,play,sync,tap,pick};
  };
 }

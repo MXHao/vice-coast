@@ -1,0 +1,11 @@
+export const DESKTOP_AUTO_LOOK_SOURCE='5351cb430e6090e421539d8931ed5bb62641aff6f44f2500ed4366fe7b2470c1';
+export const R14_AUTO_LOOK_ARTIFACT=Object.freeze({
+ sha256:'8d8df55b1d91fbf693d1d6f845e19d5ac369c3e04e598993d514d0a310b5a6cd',
+ app:'f8852c1bbcfd291c91e98eeef4a1ad66f698733166ba9356fb260a7fc2f9d297',
+ bytes:7175071
+});
+export const R14_DRIVE_VIEW_ARTIFACT=Object.freeze({
+ sha256:'4e6fab04dabf5ee80ec5ff11b47003c0b724a125689d05f0ce9e8bc762c0ad42',
+ app:'275302e352a695c73f0e3317f47e7a880f2df2fff2e8875c750cae769d651f98',
+ bytes:7178645
+});
