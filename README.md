@@ -13,11 +13,12 @@ baseline. Standalone output and test evidence are local-only by default.
 2. Use Node **v24.22.3**. Its built-in Acorn is **8.18.0**, checked at execution.
    The scripts use `--expose-internals` to load the pinned parser without installation.
    `npm run build` writes only `out/index.html` and `out/build.json`.
-3. `npm test` runs the framework's hash, provenance, and source policy checks.
-   No browser or WebGL is needed. The optional CPU-only exact-bundle fixture
-   uses **@napi-rs/canvas 0.1.100** for the original 2D label painter:
-   use the preinstalled copy or install the exact package from the npm registry
-   in a dedicated development checkout with `npm install --no-save --package-lock=false @napi-rs/canvas@0.1.100`.
+3. To run the full `npm test` suite, use the preinstalled **@napi-rs/canvas 0.1.100**
+   or install that exact version from the npm registry in a development checkout:
+   `npm install --no-save --package-lock=false @napi-rs/canvas@0.1.100`.
+   The suite includes a native-scene check, and this same dependency supplies
+   the original 2D label painter in the CPU-only replay and census tools.
+   It is not needed by `npm run build`. Neither build nor tests use a browser or WebGL.
    `node --expose-internals tools/census.mjs` prints original scene evidence.
 
 `src/skyline.mjs` and `src/activity.mjs` are the self-contained authoring modules. Their exact authored bytes are recorded
@@ -69,14 +70,18 @@ posed detached character. For a project build use `npm run build` and the exact
 mkdir -p evidence
 for layout in desktop compact; do
   node --expose-internals tools/replay-run.mjs vendor/R11.html route "$layout" > "evidence/baseline-$layout.json"
-  node --expose-internals tools/replay-run.mjs local/framework-qa.html route "$layout" > "evidence/candidate-$layout.json"
+  node --expose-internals tools/replay-run.mjs out/index.html route "$layout" > "evidence/candidate-$layout.json"
   node --expose-internals tools/audit.mjs "evidence/baseline-$layout.json" "evidence/candidate-$layout.json"
 done
+node --expose-internals tools/replay-run.mjs vendor/R11.html campaign desktop > evidence/baseline-campaign.json
+node --expose-internals tools/replay-run.mjs out/index.html campaign desktop > evidence/candidate-campaign.json
+node --expose-internals tools/audit.mjs evidence/baseline-campaign.json evidence/candidate-campaign.json
 ```
 
-`campaign` is the corresponding story-input scenario. The audit requires exact
-vendor identity, scope parity of the original game, and preservation of serialized
-saves; it allows the new presentation groups, not gameplay changes.
+The campaign scenario plays the mission sequence, then branches from a save
+earned in the replay and reopens each ending. The audit requires exact vendor
+identity, matched original gameplay and byte-identical serialized writes within
+the fixture; it allows the new presentation groups, not gameplay changes.
 
 ## Current R12 art
 
