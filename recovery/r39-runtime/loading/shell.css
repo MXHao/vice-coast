@@ -1,0 +1,11 @@
+body[data-vc-loading]{margin:0;min-height:100vh;background:#09101b}
+body[data-vc-loading]>*:not(#vc-load){visibility:hidden!important}
+#vc-load[hidden],#vc-lp-retry[hidden]{display:none!important}
+#vc-load{z-index:2147483000;position:fixed;inset:0;display:grid;place-items:center;color:#f3eee8;background:#09101b;font:400 16px/1.5 system-ui,sans-serif;text-align:left;overflow:auto}
+#vc-load .vc-lp-card{box-sizing:border-box;width:min(88vw,420px);padding:28px;border:1px solid #283b4f;border-radius:18px;background:#101d2b}
+#vc-load .vc-lp-brand{margin:0;color:#91d7d1;font:700 12px/1.3 system-ui,sans-serif;letter-spacing:.24em}
+#vc-load h1{margin:9px 0 20px;font:800 clamp(30px,7vw,52px)/1.1 system-ui,sans-serif}
+#vc-lp-status{margin:0 0 12px;min-height:3em}
+#vc-lp-meter{display:block;width:100%;height:12px;accent-color:#91d7d1}
+#vc-load .vc-lp-bottom{display:flex;gap:9px;align-items:center;justify-content:space-between;min-height:44px;margin-top:10px;color:#b3c2d4;font:400 13px/1.25 system-ui,sans-serif;font-variant-numeric:tabular-nums}
+#vc-lp-retry{padding:7px 13px;border:1px solid #91d7d1;border-radius:7px;background:#182b3f;color:#f3eee8;font:600 14px/1.3 system-ui,sans-serif;cursor:pointer}

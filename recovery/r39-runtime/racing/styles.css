@@ -1,0 +1,11 @@
+.vc-circuit #money,.vc-circuit #heat,.vc-circuit #interact,.vc-circuit #touchCar,
+.vc-circuit #touchGun,.vc-circuit #touchReload,.vc-circuit #touchFire,.vc-circuit #touchCrouch,
+.vc-circuit #districtSplash,.vc-circuit #driveHelp{display:none!important}
+.vc-circuit #taskHint{font-variant-numeric:tabular-nums}
+.vc-circuit #taskType{color:#87f6de}
+.vc-race-result{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;color:#e9fff9;font-variant-numeric:tabular-nums;font-size:clamp(1.25rem,4vw,2rem)}
+.vc-race-result b{color:#7ef5d9}
+.vc-race-result span{font-size:.75em}
+#vcRaceMap{max-height:31svh}
+#vcRace{white-space:nowrap}
+@media(max-width:350px) and (orientation:portrait){.start-actions:has(#vcRace){flex-wrap:wrap}}
